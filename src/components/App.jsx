@@ -1,4 +1,5 @@
-import {useState} from 'react';
+import { useState, useEffect } from 'react';
+// import { Component } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { StyledApp, Message } from './App.styled';
 import { Button } from './Button/Button';
@@ -10,189 +11,107 @@ import { Searchbar } from './Searchbar/Searchbar';
 import { fetchImages } from './service/api';
 
 export const App = () => {
-  const [inputQuery, setInputQuery] = useState('')
-  const [fetchResult, setFetchResult] = useState([])
-  const [page, setPage] = useState(1)
-  const [totalHits, setTotalHits] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [outOfImg, setOutOfImg] = useState(false)
-  const [error, setError] = useState(null)
-  const [showModal, setShowModal] = useState(false)
-  const [url, setUrl] = useState('')
+  const [inputQuery, setInputQuery] = useState('');
+  const [fetchResult, setFetchResult] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [outOfImg, setOutOfImg] = useState(false);
+  const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [url, setUrl] = useState('');
 
 
 
-return (
-      <>
-        <GlobalStyle />
-        <StyledApp>
-          <Searchbar onSubmit={this.handleFormSubmit} />
+  useEffect(() => {
+  if (!inputQuery) {
+      return;
+    }
 
-          {!inputQuery && (
-            <Message>
-              Your images will be here. Enter something to search!
-            </Message>
-          )}
+    setLoading(true);
+    fetchImages(inputQuery, page)
+      .then(data => {
+        if (data.hits.length === 0) {
+          setOutOfImg(true);
+        }
+        setFetchResult(prevState => [...prevState, ...data.hits]);
+        setTotalHits(data.totalHits);
+      })
+      .catch(error => {
+        setError(error);
+        setOutOfImg(true);
+      })
+      .finally(() => setLoading(false));
+  }, [inputQuery, page]);
 
-          {loading && <Loader visible={loading} />}
 
-          {outOfImg && (
-            <Message>Sorry. There are no {inputQuery} images</Message>
-          )}
 
-          {error && <h1>{error.message}</h1>}
+  const handleFormSubmit = inputQuery => {
+    setInputQuery(inputQuery);
+    setFetchResult([]);
+    setPage(1);
+    setTotalHits(0);
+    setLoading(false);
+    setOutOfImg(false);
+    setError(null);
+    setUrl('');
+  };
 
-          {fetchResult && (
-            <ImageGallery
-              images={this.state.fetchResult}
-              onModal={this.toggleModal}
-            />
-          )}
+   const onLoadMoreClick = () => {
+    setPage(prevState => (page + 1 ));
+  };
 
-          {showModal && <Modal onClose={this.toggleModal} url={url} />}
 
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: {
-                border: '3px solid pink',
-              },
-              duration: 2000,
-            }}
-          />
-        </StyledApp>
+  const toggleModal = url => {
+    setShowModal(!showModal);
+    setUrl(url);
+  };
 
-        {fetchResult.length > 0 && fetchResult.length < totalHits && (
-          <Button onClick={this.onLoadMoreClick}>Load More</Button>
+  return (
+    <>
+      <GlobalStyle />
+      <StyledApp>
+        <Searchbar onSubmit={handleFormSubmit} />
+
+        {!inputQuery && (
+          <Message>
+            This page is created for visual enjoyment,
+            please enter something to search
+            and enjoy the beautiful pictures...
+          </Message>
         )}
-      </>
-    );
 
-}
+        {loading && <Loader visible={loading} />}
 
+        {outOfImg &&
+          <Message>
+          Sorry. There are no {inputQuery} images,
+          enter something else...
+        </Message>}
 
+        {error && <h1>{error.message}</h1>}
 
+        {fetchResult && (
+          <ImageGallery images={fetchResult} onModal={toggleModal} />
+        )}
 
+        {showModal && <Modal onClose={toggleModal} url={url} />}
 
-  // state = {
-  //   inputQuery: '',
-  //   fetchResult: [],
-  //   page: 1,
-  //   totalHits: 0,
-  //   loading: false,
-  //   outOfImg: false,
-  //   error: null,
-  //   showModal: false,
-  //   url: '',
-  // };
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              border: '3px solid pink',
+            },
+            duration: 2000,
+          }}
+        />
+      </StyledApp>
 
-//   componentDidUpdate(prevProps, prevState) {
-//     const prevQuery = prevState.inputQuery;
-//     const currentQuery = this.state.inputQuery;
-//     const prevPage = prevState.page;
-//     const currentPage = this.state.page;
+      {fetchResult.length > 0 && fetchResult.length < totalHits && (
+        <Button onClick={onLoadMoreClick}>Load More</Button>
+      )}
+    </>
+  );
+};
 
-//     if (prevQuery !== currentQuery || prevPage !== currentPage) {
-//       this.setState({ loading: true });
-
-//       fetchImages(currentQuery, currentPage)
-//         .then(data => {
-//           if (data.hits.length === 0) {
-//             this.setState({
-//               outOfImg: true,
-//             });
-//           }
-
-//           this.setState(prevState => ({
-//             fetchResult: [...prevState.fetchResult, ...data.hits],
-//             totalHits: data.totalHits,
-//           }));
-//         })
-//         .catch(error => this.setState({ error, outOfImg: true }))
-//         .finally(() => this.setState({ loading: false }));
-//     }
-//   }
-
-//   handleFormSubmit = inputQuery => {
-//     this.setState({
-//       inputQuery: inputQuery,
-//       fetchResult: [],
-//       page: 1,
-//       totalHits: 0,
-//       loading: false,
-//       outOfImg: false,
-//       error: null,
-//       url: '',
-//     });
-//   };
-
-//   onLoadMoreClick = () => {
-//     this.setState(prevState => ({ page: prevState.page + 1 }));
-//   };
-
-//   toggleModal = url => {
-//     this.setState(({ showModal }) => ({
-//       showModal: !showModal,
-//       url,
-//     }));
-//   };
-
-//   render() {
-//     const {
-//       loading,
-//       fetchResult,
-//       error,
-//       inputQuery,
-//       outOfImg,
-//       totalHits,
-//       showModal,
-//       url,
-//     } = this.state;
-
-//     return (
-//       <>
-//         <GlobalStyle />
-//         <StyledApp>
-//           <Searchbar onSubmit={this.handleFormSubmit} />
-
-//           {!inputQuery && (
-//             <Message>
-//               Your images will be here. Enter something to search!
-//             </Message>
-//           )}
-
-//           {loading && <Loader visible={loading} />}
-
-//           {outOfImg && (
-//             <Message>Sorry. There are no {inputQuery} images</Message>
-//           )}
-
-//           {error && <h1>{error.message}</h1>}
-
-//           {fetchResult && (
-//             <ImageGallery
-//               images={this.state.fetchResult}
-//               onModal={this.toggleModal}
-//             />
-//           )}
-
-//           {showModal && <Modal onClose={this.toggleModal} url={url} />}
-
-//           <Toaster
-//             position="top-right"
-//             toastOptions={{
-//               style: {
-//                 border: '3px solid pink',
-//               },
-//               duration: 2000,
-//             }}
-//           />
-//         </StyledApp>
-
-//         {fetchResult.length > 0 && fetchResult.length < totalHits && (
-//           <Button onClick={this.onLoadMoreClick}>Load More</Button>
-//         )}
-//       </>
-//     );
-//   }
-// }

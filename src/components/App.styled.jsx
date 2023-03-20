@@ -8,7 +8,7 @@ export const StyledApp = styled.div`
 `;
 
 export const Message = styled.div`
-  width: 500px;
+  width: 600px;
   text-align: center;
   margin-left: auto;
   margin-right: auto;
